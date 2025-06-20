@@ -41,19 +41,114 @@ export const createSubjectContent = (scene: THREE.Scene, subject: string, modelI
 };
 
 export const animateScene = (scene: THREE.Scene) => {
+  const time = Date.now() * 0.001;
+
   scene.children.forEach(child => {
+    // Planetary orbit animations
     if (child.userData.orbit !== undefined) {
-      // Animate planetary orbits
       child.userData.angle += child.userData.speed;
       child.position.x = Math.cos(child.userData.angle) * child.userData.distance;
       child.position.z = Math.sin(child.userData.angle) * child.userData.distance;
     }
+    
+    // Electron animations
     if (child.userData.type === 'electron') {
-      // Animate electrons
       child.userData.angle += 0.05;
-      const radius = 1;
-      child.position.x = Math.cos(child.userData.angle) * radius;
-      child.position.z = Math.sin(child.userData.angle) * radius;
+      const radius = child.userData.radius || 1;
+      const shellOffset = child.userData.shell * Math.PI / 3;
+      child.position.x = Math.cos(child.userData.angle + shellOffset) * radius;
+      child.position.z = Math.sin(child.userData.angle + shellOffset) * radius;
+      child.position.y = Math.sin(child.userData.angle * 2) * 0.1;
+    }
+
+    // Heart beating animation
+    if (child.userData.type === 'heart') {
+      const beatScale = 1 + Math.sin(time * 8) * 0.1;
+      child.scale.set(beatScale, beatScale, beatScale);
+    }
+
+    // Plant cell organelle movement
+    if (child.userData.type === 'chloroplast') {
+      child.position.x += Math.sin(time * 2 + child.userData.offset) * 0.001;
+      child.position.y += Math.cos(time * 1.5 + child.userData.offset) * 0.001;
+    }
+
+    // Galaxy rotation
+    if (child.userData.type === 'galaxy') {
+      child.rotation.y += 0.002;
+      child.rotation.z += 0.001;
+    }
+
+    // Vector pulsing
+    if (child.userData.type === 'vector') {
+      const pulse = 1 + Math.sin(time * 3 + child.userData.offset) * 0.1;
+      child.scale.set(pulse, pulse, pulse);
+    }
+
+    // Fractal rotation
+    if (child.userData.type === 'fractal') {
+      child.rotation.x += 0.01;
+      child.rotation.y += 0.015;
+      child.rotation.z += 0.005;
+    }
+
+    // Continental drift simulation
+    if (child.userData.type === 'continent') {
+      child.rotation.y += child.userData.driftSpeed || 0.001;
+    }
+
+    // Volcano eruption animation
+    if (child.userData.type === 'lava') {
+      const eruptionHeight = 0.7 + Math.sin(time * 4) * 0.3;
+      child.position.y = eruptionHeight;
+      const glowIntensity = 0.5 + Math.sin(time * 6) * 0.5;
+      if (child.material) {
+        child.material.emissive.setRGB(glowIntensity, glowIntensity * 0.3, 0);
+      }
+    }
+
+    // Smoke particle movement
+    if (child.userData.type === 'smoke') {
+      child.position.y += 0.01;
+      child.position.x += Math.sin(time + child.userData.offset) * 0.005;
+      if (child.position.y > 3) child.position.y = 0.8;
+    }
+
+    // Molecular vibration
+    if (child.userData.type === 'molecule') {
+      const vibration = Math.sin(time * 10 + child.userData.offset) * 0.02;
+      child.position.x += vibration;
+      child.position.y += vibration * 0.5;
+    }
+
+    // Chemical reaction animation
+    if (child.userData.type === 'reactant') {
+      child.position.x += child.userData.velocity * 0.01;
+      if (child.position.x > 0) {
+        child.userData.type = 'product';
+        child.position.x = 2;
+      }
+    }
+
+    // Light ray animation
+    if (child.userData.type === 'lightRay') {
+      const wave = Math.sin(time * 5 + child.userData.offset) * 0.1;
+      child.position.y += wave * 0.5;
+      child.material.opacity = 0.7 + Math.sin(time * 3) * 0.3;
+    }
+
+    // Circuit electricity flow
+    if (child.userData.type === 'electricity') {
+      child.position.x += child.userData.direction * 0.05;
+      if (Math.abs(child.position.x) > 2) {
+        child.position.x = -2 * child.userData.direction;
+      }
+    }
+
+    // LED blinking
+    if (child.userData.type === 'led') {
+      const blink = Math.sin(time * 8) > 0 ? 1 : 0.3;
+      child.material.emissive.setRGB(blink, 0, 0);
     }
   });
 };
@@ -104,6 +199,7 @@ export const createDNAHelix = (scene: THREE.Scene) => {
 
 export const createHumanHeart = (scene: THREE.Scene) => {
   const heartGroup = new THREE.Group();
+  heartGroup.userData.type = 'heart';
   
   // Main heart chambers
   const heartGeometry = new THREE.SphereGeometry(0.8, 16, 16);
@@ -156,7 +252,7 @@ export const createPlantCell = (scene: THREE.Scene) => {
   nucleus.position.set(0, 0, 0);
   cellGroup.add(nucleus);
 
-  // Chloroplasts
+  // Chloroplasts with animation data
   for (let i = 0; i < 6; i++) {
     const chloroplastGeometry = new THREE.SphereGeometry(0.1, 8, 8);
     const chloroplastMaterial = new THREE.MeshPhongMaterial({ color: 0x228B22 });
@@ -166,6 +262,10 @@ export const createPlantCell = (scene: THREE.Scene) => {
       (Math.random() - 0.5) * 1,
       (Math.random() - 0.5) * 0.8
     );
+    chloroplast.userData = { 
+      type: 'chloroplast', 
+      offset: i * Math.PI / 3 
+    };
     cellGroup.add(chloroplast);
   }
 
@@ -254,6 +354,7 @@ export const createPlanetaryOrbits = (scene: THREE.Scene) => {
 
 export const createGalaxy = (scene: THREE.Scene) => {
   const galaxyGroup = new THREE.Group();
+  galaxyGroup.userData.type = 'galaxy';
   
   // Central black hole
   const blackHoleGeometry = new THREE.SphereGeometry(0.2, 16, 16);
@@ -318,7 +419,7 @@ export const createVectors = (scene: THREE.Scene) => {
     { direction: [1, 1, 1], color: 0xff00ff, label: 'XYZ' }
   ];
 
-  vectors.forEach(vectorData => {
+  vectors.forEach((vectorData, index) => {
     // Arrow shaft
     const arrowGeometry = new THREE.CylinderGeometry(0.02, 0.02, 1.5);
     const arrowMaterial = new THREE.MeshPhongMaterial({ color: vectorData.color });
@@ -329,6 +430,7 @@ export const createVectors = (scene: THREE.Scene) => {
     arrow.lookAt(direction);
     arrow.rotateX(Math.PI / 2);
     arrow.position.copy(direction.multiplyScalar(0.75));
+    arrow.userData = { type: 'vector', offset: index * Math.PI / 3 };
     
     vectorGroup.add(arrow);
 
@@ -337,6 +439,7 @@ export const createVectors = (scene: THREE.Scene) => {
     const head = new THREE.Mesh(headGeometry, arrowMaterial);
     head.position.copy(direction.multiplyScalar(2));
     head.lookAt(direction.multiplyScalar(3));
+    head.userData = { type: 'vector', offset: index * Math.PI / 3 };
     vectorGroup.add(head);
   });
 
@@ -345,6 +448,7 @@ export const createVectors = (scene: THREE.Scene) => {
 
 export const createFractal = (scene: THREE.Scene) => {
   const fractalGroup = new THREE.Group();
+  fractalGroup.userData.type = 'fractal';
   
   const createSierpinskiTetrahedron = (level: number, size: number, position: THREE.Vector3) => {
     if (level === 0) {
@@ -419,13 +523,13 @@ export const createContinents = (scene: THREE.Scene) => {
 
   // Detailed continents
   const continents = [
-    { name: 'North America', lat: 45, lon: -100, size: 0.3, color: 0x228B22 },
-    { name: 'South America', lat: -15, lon: -60, size: 0.25, color: 0x32CD32 },
-    { name: 'Europe', lat: 50, lon: 10, size: 0.15, color: 0x90EE90 },
-    { name: 'Asia', lat: 35, lon: 100, size: 0.4, color: 0x006400 },
-    { name: 'Africa', lat: 0, lon: 20, size: 0.3, color: 0x9ACD32 },
-    { name: 'Australia', lat: -25, lon: 140, size: 0.1, color: 0x7CFC00 },
-    { name: 'Antarctica', lat: -80, lon: 0, size: 0.2, color: 0xF0F8FF }
+    { name: 'North America', lat: 45, lon: -100, size: 0.3, color: 0x228B22, drift: 0.0005 },
+    { name: 'South America', lat: -15, lon: -60, size: 0.25, color: 0x32CD32, drift: 0.0003 },
+    { name: 'Europe', lat: 50, lon: 10, size: 0.15, color: 0x90EE90, drift: 0.0002 },
+    { name: 'Asia', lat: 35, lon: 100, size: 0.4, color: 0x006400, drift: 0.0001 },
+    { name: 'Africa', lat: 0, lon: 20, size: 0.3, color: 0x9ACD32, drift: 0.0004 },
+    { name: 'Australia', lat: -25, lon: 140, size: 0.1, color: 0x7CFC00, drift: 0.0006 },
+    { name: 'Antarctica', lat: -80, lon: 0, size: 0.2, color: 0xF0F8FF, drift: 0.0001 }
   ];
 
   continents.forEach(continent => {
@@ -441,6 +545,7 @@ export const createContinents = (scene: THREE.Scene) => {
     const contMaterial = new THREE.MeshPhongMaterial({ color: continent.color });
     const contMesh = new THREE.Mesh(contGeometry, contMaterial);
     contMesh.position.set(x, y, z);
+    contMesh.userData = { type: 'continent', driftSpeed: continent.drift };
     continentGroup.add(contMesh);
   });
 
@@ -464,14 +569,15 @@ export const createVolcano = (scene: THREE.Scene) => {
   crater.position.y = 0.6;
   volcanoGroup.add(crater);
 
-  // Lava
+  // Lava with animation
   const lavaGeometry = new THREE.SphereGeometry(0.15, 8, 8);
   const lavaMaterial = new THREE.MeshBasicMaterial({ color: 0xFF4500 });
   const lava = new THREE.Mesh(lavaGeometry, lavaMaterial);
   lava.position.y = 0.7;
+  lava.userData = { type: 'lava' };
   volcanoGroup.add(lava);
 
-  // Smoke particles
+  // Smoke particles with animation
   for (let i = 0; i < 20; i++) {
     const smokeGeometry = new THREE.SphereGeometry(0.05, 4, 4);
     const smokeMaterial = new THREE.MeshBasicMaterial({ 
@@ -485,6 +591,7 @@ export const createVolcano = (scene: THREE.Scene) => {
       0.8 + Math.random() * 1.5,
       (Math.random() - 0.5) * 0.5
     );
+    smoke.userData = { type: 'smoke', offset: i * Math.PI / 10 };
     volcanoGroup.add(smoke);
   }
 
@@ -542,6 +649,7 @@ export const createAtomicModel = (scene: THREE.Scene) => {
       (Math.random() - 0.5) * 0.3,
       (Math.random() - 0.5) * 0.3
     );
+    proton.userData = { type: 'molecule', offset: i * Math.PI / 3 };
     nucleusGroup.add(proton);
   }
   
@@ -555,6 +663,7 @@ export const createAtomicModel = (scene: THREE.Scene) => {
       (Math.random() - 0.5) * 0.3,
       (Math.random() - 0.5) * 0.3
     );
+    neutron.userData = { type: 'molecule', offset: i * Math.PI / 3 };
     nucleusGroup.add(neutron);
   }
   
@@ -614,6 +723,8 @@ export const createChemicalReaction = (scene: THREE.Scene) => {
     
     h1.position.set(-0.15, 0, 0);
     h2.position.set(0.15, 0, 0);
+    h1.userData = { type: 'reactant', velocity: 1 };
+    h2.userData = { type: 'reactant', velocity: 1 };
     
     h2Group.add(h1, h2);
     h2Group.position.set(-2 + i * 0.8, 0.5, 0);
@@ -633,6 +744,8 @@ export const createChemicalReaction = (scene: THREE.Scene) => {
   
   o1.position.set(-0.2, 0, 0);
   o2.position.set(0.2, 0, 0);
+  o1.userData = { type: 'reactant', velocity: 1 };
+  o2.userData = { type: 'reactant', velocity: 1 };
   o2Group.add(o1, o2);
   o2Group.position.set(-2, -0.5, 0);
   reactionGroup.add(o2Group);
@@ -667,6 +780,10 @@ export const createChemicalReaction = (scene: THREE.Scene) => {
     
     h1.position.set(0.25, 0.2, 0);
     h2.position.set(0.25, -0.2, 0);
+    
+    oxygen.userData = { type: 'molecule', offset: i * Math.PI };
+    h1.userData = { type: 'molecule', offset: i * Math.PI + 1 };
+    h2.userData = { type: 'molecule', offset: i * Math.PI + 2 };
     
     h2oGroup.add(oxygen, h1, h2);
     h2oGroup.position.set(2 + i * 0.8, 0, 0);
@@ -729,16 +846,21 @@ export const createLightRays = (scene: THREE.Scene) => {
   prism.rotation.z = Math.PI / 2;
   lightGroup.add(prism);
   
-  // Light rays
+  // Light rays with animation
   const colors = [0xff0000, 0xff8000, 0xffff00, 0x00ff00, 0x0000ff, 0x8000ff, 0xff00ff];
   colors.forEach((color, index) => {
     const rayGeometry = new THREE.CylinderGeometry(0.01, 0.01, 2);
-    const rayMaterial = new THREE.MeshBasicMaterial({ color });
+    const rayMaterial = new THREE.MeshBasicMaterial({ 
+      color,
+      transparent: true,
+      opacity: 0.8
+    });
     const ray = new THREE.Mesh(rayGeometry, rayMaterial);
     
     ray.position.set(1, 0, 0);
     ray.rotation.z = Math.PI / 2;
     ray.rotation.y = (index - 3) * 0.1;
+    ray.userData = { type: 'lightRay', offset: index * Math.PI / 4 };
     lightGroup.add(ray);
   });
   
@@ -772,11 +894,12 @@ export const createCircuit = (scene: THREE.Scene) => {
   battery.position.set(-1, 0.5, 0.1);
   circuitGroup.add(battery);
   
-  // LED
+  // LED with blinking animation
   const ledGeometry = new THREE.SphereGeometry(0.1, 8, 8);
   const ledMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
   const led = new THREE.Mesh(ledGeometry, ledMaterial);
   led.position.set(1, 0.5, 0.1);
+  led.userData = { type: 'led' };
   circuitGroup.add(led);
   
   // Resistor
@@ -786,6 +909,20 @@ export const createCircuit = (scene: THREE.Scene) => {
   resistor.position.set(0, -0.5, 0.1);
   resistor.rotation.z = Math.PI / 2;
   circuitGroup.add(resistor);
+  
+  // Electricity flow particles
+  for (let i = 0; i < 4; i++) {
+    const electricityGeometry = new THREE.SphereGeometry(0.02, 4, 4);
+    const electricityMaterial = new THREE.MeshBasicMaterial({ 
+      color: 0x00ffff,
+      transparent: true,
+      opacity: 0.8
+    });
+    const electricity = new THREE.Mesh(electricityGeometry, electricityMaterial);
+    electricity.position.set(-2 + i, 0.5, 0.12);
+    electricity.userData = { type: 'electricity', direction: 1 };
+    circuitGroup.add(electricity);
+  }
   
   // Wires
   const wireGeometry = new THREE.CylinderGeometry(0.02, 0.02, 1);
