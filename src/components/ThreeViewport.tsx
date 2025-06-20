@@ -15,6 +15,7 @@ const ThreeViewport: React.FC<ThreeViewportProps> = ({ selectedSubject, currentM
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const frameRef = useRef<number>();
+  const isDraggingRef = useRef(false);
 
   useEffect(() => {
     if (!mountRef.current || !selectedSubject) return;
@@ -55,16 +56,15 @@ const ThreeViewport: React.FC<ThreeViewportProps> = ({ selectedSubject, currentM
     createSubjectContent(scene, selectedSubject, currentModel);
 
     // Mouse controls
-    let isDragging = false;
     let previousMousePosition = { x: 0, y: 0 };
 
     const handleMouseDown = (event: MouseEvent) => {
-      isDragging = true;
+      isDraggingRef.current = true;
       previousMousePosition = { x: event.clientX, y: event.clientY };
     };
 
     const handleMouseMove = (event: MouseEvent) => {
-      if (!isDragging) return;
+      if (!isDraggingRef.current) return;
 
       const deltaMove = {
         x: event.clientX - previousMousePosition.x,
@@ -74,8 +74,10 @@ const ThreeViewport: React.FC<ThreeViewportProps> = ({ selectedSubject, currentM
       // Rotate scene objects
       scene.children.forEach(child => {
         if (child instanceof THREE.Mesh || child instanceof THREE.Group) {
-          child.rotation.y += deltaMove.x * 0.01;
-          child.rotation.x += deltaMove.y * 0.01;
+          if (!child.userData.noManualRotation) {
+            child.rotation.y += deltaMove.x * 0.01;
+            child.rotation.x += deltaMove.y * 0.01;
+          }
         }
       });
 
@@ -83,7 +85,7 @@ const ThreeViewport: React.FC<ThreeViewportProps> = ({ selectedSubject, currentM
     };
 
     const handleMouseUp = () => {
-      isDragging = false;
+      isDraggingRef.current = false;
     };
 
     const handleWheel = (event: WheelEvent) => {
@@ -96,21 +98,21 @@ const ThreeViewport: React.FC<ThreeViewportProps> = ({ selectedSubject, currentM
     renderer.domElement.addEventListener('mouseup', handleMouseUp);
     renderer.domElement.addEventListener('wheel', handleWheel);
 
-    // Animation loop
+    // Animation loop with proper timing
     const animate = () => {
       frameRef.current = requestAnimationFrame(animate);
 
-      // Auto-rotation when not dragging
-      if (!isDragging) {
+      // Auto-rotation when not dragging (reduced for better visibility of other animations)
+      if (!isDraggingRef.current) {
         scene.children.forEach(child => {
-          if (child instanceof THREE.Mesh || child instanceof THREE.Group) {
-            child.rotation.y += 0.005;
-            child.rotation.x += 0.002;
+          if ((child instanceof THREE.Mesh || child instanceof THREE.Group) && !child.userData.type) {
+            child.rotation.y += 0.002;
+            child.rotation.x += 0.001;
           }
         });
       }
 
-      // Animate dynamic elements
+      // Animate dynamic elements - this is the key part that was missing proper execution
       animateScene(scene);
 
       renderer.render(scene, camera);

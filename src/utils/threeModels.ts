@@ -44,111 +44,115 @@ export const animateScene = (scene: THREE.Scene) => {
   const time = Date.now() * 0.001;
 
   scene.children.forEach(child => {
-    // Planetary orbit animations
+    // Planetary orbit animations - enhanced for visibility
     if (child.userData.orbit !== undefined) {
       child.userData.angle += child.userData.speed;
       child.position.x = Math.cos(child.userData.angle) * child.userData.distance;
       child.position.z = Math.sin(child.userData.angle) * child.userData.distance;
     }
     
-    // Electron animations
+    // Electron animations - made more dramatic
     if (child.userData.type === 'electron') {
-      child.userData.angle += 0.05;
+      child.userData.angle += 0.08; // Increased speed
       const radius = child.userData.radius || 1;
       const shellOffset = child.userData.shell * Math.PI / 3;
       child.position.x = Math.cos(child.userData.angle + shellOffset) * radius;
       child.position.z = Math.sin(child.userData.angle + shellOffset) * radius;
-      child.position.y = Math.sin(child.userData.angle * 2) * 0.1;
+      child.position.y = Math.sin(child.userData.angle * 2) * 0.2; // Increased amplitude
     }
 
-    // Heart beating animation
+    // Heart beating animation - more pronounced
     if (child.userData.type === 'heart') {
-      const beatScale = 1 + Math.sin(time * 8) * 0.1;
+      const beatScale = 1 + Math.sin(time * 6) * 0.2; // Increased amplitude and speed
       child.scale.set(beatScale, beatScale, beatScale);
     }
 
-    // Plant cell organelle movement
+    // Plant cell organelle movement - more visible
     if (child.userData.type === 'chloroplast') {
-      child.position.x += Math.sin(time * 2 + child.userData.offset) * 0.001;
-      child.position.y += Math.cos(time * 1.5 + child.userData.offset) * 0.001;
+      child.position.x += Math.sin(time * 3 + child.userData.offset) * 0.003; // Increased movement
+      child.position.y += Math.cos(time * 2 + child.userData.offset) * 0.003;
     }
 
-    // Galaxy rotation
+    // Galaxy rotation - more noticeable
     if (child.userData.type === 'galaxy') {
-      child.rotation.y += 0.002;
-      child.rotation.z += 0.001;
+      child.rotation.y += 0.005; // Increased speed
+      child.rotation.z += 0.002;
     }
 
-    // Vector pulsing
+    // Vector pulsing - more dramatic
     if (child.userData.type === 'vector') {
-      const pulse = 1 + Math.sin(time * 3 + child.userData.offset) * 0.1;
+      const pulse = 1 + Math.sin(time * 4 + child.userData.offset) * 0.3; // Increased amplitude
       child.scale.set(pulse, pulse, pulse);
     }
 
-    // Fractal rotation
+    // Fractal rotation - more visible
     if (child.userData.type === 'fractal') {
-      child.rotation.x += 0.01;
-      child.rotation.y += 0.015;
-      child.rotation.z += 0.005;
+      child.rotation.x += 0.02; // Doubled speed
+      child.rotation.y += 0.03;
+      child.rotation.z += 0.01;
     }
 
-    // Continental drift simulation
+    // Continental drift simulation - enhanced
     if (child.userData.type === 'continent') {
-      child.rotation.y += child.userData.driftSpeed || 0.001;
+      child.rotation.y += (child.userData.driftSpeed || 0.001) * 3; // Made 3x faster
     }
 
-    // Volcano eruption animation
+    // Volcano eruption animation - more dramatic
     if (child.userData.type === 'lava') {
-      const eruptionHeight = 0.7 + Math.sin(time * 4) * 0.3;
+      const eruptionHeight = 0.7 + Math.sin(time * 6) * 0.5; // Increased frequency
       child.position.y = eruptionHeight;
-      const glowIntensity = 0.5 + Math.sin(time * 6) * 0.5;
-      if (child.material) {
-        child.material.emissive.setRGB(glowIntensity, glowIntensity * 0.3, 0);
+      const glowIntensity = 0.5 + Math.sin(time * 8) * 0.5;
+      if (child.material && 'emissive' in child.material) {
+        (child.material as THREE.MeshBasicMaterial).emissive.setRGB(glowIntensity, glowIntensity * 0.3, 0);
       }
     }
 
-    // Smoke particle movement
+    // Smoke particle movement - enhanced
     if (child.userData.type === 'smoke') {
-      child.position.y += 0.01;
-      child.position.x += Math.sin(time + child.userData.offset) * 0.005;
+      child.position.y += 0.02; // Doubled speed
+      child.position.x += Math.sin(time * 2 + child.userData.offset) * 0.01; // Doubled movement
       if (child.position.y > 3) child.position.y = 0.8;
     }
 
-    // Molecular vibration
+    // Molecular vibration - more visible
     if (child.userData.type === 'molecule') {
-      const vibration = Math.sin(time * 10 + child.userData.offset) * 0.02;
+      const vibration = Math.sin(time * 15 + child.userData.offset) * 0.05; // Increased amplitude and frequency
       child.position.x += vibration;
       child.position.y += vibration * 0.5;
     }
 
-    // Chemical reaction animation
+    // Chemical reaction animation - enhanced
     if (child.userData.type === 'reactant') {
-      child.position.x += child.userData.velocity * 0.01;
+      child.position.x += child.userData.velocity * 0.02; // Doubled speed
       if (child.position.x > 0) {
         child.userData.type = 'product';
         child.position.x = 2;
       }
     }
 
-    // Light ray animation
+    // Light ray animation - more dramatic
     if (child.userData.type === 'lightRay') {
-      const wave = Math.sin(time * 5 + child.userData.offset) * 0.1;
+      const wave = Math.sin(time * 8 + child.userData.offset) * 0.2; // Increased amplitude and frequency
       child.position.y += wave * 0.5;
-      child.material.opacity = 0.7 + Math.sin(time * 3) * 0.3;
+      if (child.material && 'opacity' in child.material) {
+        (child.material as THREE.MeshBasicMaterial).opacity = 0.7 + Math.sin(time * 5) * 0.3;
+      }
     }
 
-    // Circuit electricity flow
+    // Circuit electricity flow - enhanced
     if (child.userData.type === 'electricity') {
-      child.position.x += child.userData.direction * 0.05;
+      child.position.x += child.userData.direction * 0.1; // Doubled speed
       if (Math.abs(child.position.x) > 2) {
         child.position.x = -2 * child.userData.direction;
       }
     }
 
-    // LED blinking
+    // LED blinking - more noticeable
     if (child.userData.type === 'led') {
-      const blink = Math.sin(time * 8) > 0 ? 1 : 0.3;
-      child.material.emissive.setRGB(blink, 0, 0);
+      const blink = Math.sin(time * 12) > 0 ? 1 : 0.1; // Increased frequency, darker off state
+      if (child.material && 'emissive' in child.material) {
+        (child.material as THREE.MeshBasicMaterial).emissive.setRGB(blink, 0, 0);
+      }
     }
   });
 };
